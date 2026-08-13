@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/frontend",
+    "packages/database"
   ],
   "scripts": {
-    "build": "npx prisma generate --schema=packages/database/prisma/schema.postgres.prisma && npm run build --workspace=@trackmyhabits/frontend",
-    "dev:frontend": "npm run dev --workspace=@trackmyhabits/frontend",
-    "dev:backend": "npm run start:dev --workspace=@trackmyhabits/backend"
+    "build": "npx prisma generate --schema=packages/database/prisma/schema.postgres.prisma && npm run build --workspace=apps/frontend",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "dev:backend": "npm run start:dev --workspace=apps/backend"
   }
 }
