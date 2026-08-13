@@ -190,13 +190,8 @@ export default function GuidedTutorial({ active, onComplete }: GuidedTutorialPro
           if (stepRoute === pathname) {
             setCurrentStepIdx(idx);
           } else {
-            const matchingIdx = TUTORIAL_STEPS.findIndex((s) => s.route === pathname);
-            if (matchingIdx !== -1) {
-              setCurrentStepIdx(matchingIdx);
-              sessionStorage.setItem('tmh_tutorial_step', String(matchingIdx));
-            } else {
-              setCurrentStepIdx(idx);
-            }
+            router.push(stepRoute);
+            setCurrentStepIdx(idx);
           }
         }
       }
@@ -671,6 +666,7 @@ export default function GuidedTutorial({ active, onComplete }: GuidedTutorialPro
                   fill
                   style={{ objectFit: 'contain' }}
                   priority
+                  unoptimized
                 />
               </div>
 

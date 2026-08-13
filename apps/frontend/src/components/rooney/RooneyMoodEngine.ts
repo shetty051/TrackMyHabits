@@ -4,7 +4,8 @@ import { DialogueLine } from './rooneyDialogueEngine';
 export function getRealtimeRooneyMood(
   totalDueCount: number,
   completedCount: number,
-  hasUnaddressedMissedHabit: boolean
+  hasUnaddressedMissedHabit: boolean,
+  simulatedHour?: number
 ): DialogueLine {
   // Priority 1: Unaddressed Streak Break (Disappointed / Sad Rooney on App Open)
   if (hasUnaddressedMissedHabit) {
@@ -14,26 +15,39 @@ export function getRealtimeRooneyMood(
     };
   }
 
+  // Priority 2: No Habits Created Yet / Due Today
+  if (totalDueCount === 0) {
+    return {
+      text: "Welcome! Create your first habit today to start building your streak! ⚡",
+      expression: RooneyExpression.NEUTRAL,
+    };
+  }
+
   const incompleteCount = Math.max(0, totalDueCount - completedCount);
 
-  // Priority 2: All Habits Completed Today!
-  if (totalDueCount > 0 && incompleteCount === 0) {
+  // Priority 3: All Habits Completed Today!
+  if (incompleteCount === 0) {
     return {
       text: "Awesome work! All scheduled habits for today are completed! Enjoy the rest of your day! 🎉",
       expression: RooneyExpression.CELEBRATORY,
     };
   }
 
-  // Priority 3: Compute Real Remaining Time in Current Day (until 11:59:59 PM local time)
+  // Priority 4: Compute Real Remaining Time in Current Day (until 11:59:59 PM local time)
   const now = new Date();
+  const currentHour = simulatedHour !== undefined ? simulatedHour : now.getHours();
+
   const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-  const diffMs = Math.max(0, endOfDay.getTime() - now.getTime());
+  let diffMs = Math.max(0, endOfDay.getTime() - now.getTime());
+
+  if (simulatedHour !== undefined) {
+    const simTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), simulatedHour, 0, 0);
+    diffMs = Math.max(0, endOfDay.getTime() - simTime.getTime());
+  }
 
   const hoursLeft = Math.floor(diffMs / (1000 * 60 * 60));
   const minutesLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
   const timeString = `${hoursLeft}h ${minutesLeft}m`;
-  const currentHour = now.getHours();
 
   // Morning (12 AM - 12 PM)
   if (currentHour < 12) {
@@ -55,7 +69,7 @@ export function getRealtimeRooneyMood(
     };
   }
 
-  // Evening (6 PM - 9 PM)
+  // Evening (6 PM - 9 PM) - Mildly Concerned
   if (currentHour < 21) {
     return {
       text: `Evening update! Only ${timeString} remaining today and ${incompleteCount} habit${

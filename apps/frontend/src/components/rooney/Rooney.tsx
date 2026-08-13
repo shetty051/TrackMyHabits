@@ -96,14 +96,27 @@ export default function Rooney({
         const user = profData.user;
         const habits = habitsData.habits || [];
 
-        const todayISO = new Date().toISOString().split('T')[0];
+        // Local YYYY-MM-DD date string
+        const todayISO = new Date().toLocaleDateString('en-CA');
         const totalDue = habits.length;
         const completed = habits.filter((h: any) =>
           h.logs?.some((l: any) => l.date === todayISO && l.completed)
         ).length;
         const hasMissed = !!user?.hasUnaddressedMissedHabit;
 
-        const moodDialogue = getRealtimeRooneyMood(totalDue, completed, hasMissed);
+        // Check for dev simulation override (?simulatedHour=20 or window.__simulatedHour)
+        let simHour: number | undefined = undefined;
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search);
+          const hourParam = urlParams.get('simulatedHour');
+          if (hourParam !== null) {
+            simHour = parseInt(hourParam, 10);
+          } else if ((window as any).__simulatedHour !== undefined) {
+            simHour = (window as any).__simulatedHour;
+          }
+        }
+
+        const moodDialogue = getRealtimeRooneyMood(totalDue, completed, hasMissed, simHour);
         setCurrentDialogue(moodDialogue);
       }
     } catch (err) {
@@ -114,6 +127,8 @@ export default function Rooney({
   useEffect(() => {
     if (!showIntroOnLoad && !isProminent) {
       fetchRealtimeMood();
+      const interval = setInterval(fetchRealtimeMood, 15000);
+      return () => clearInterval(interval);
     }
   }, [showIntroOnLoad, isProminent]);
 
