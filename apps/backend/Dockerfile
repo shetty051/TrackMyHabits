@@ -4,7 +4,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy root monorepo files
-COPY package.json package-lock.json turbo.json ./
+COPY package.json package-lock.json ./
 COPY packages/database ./packages/database
 COPY apps/backend ./apps/backend
 
