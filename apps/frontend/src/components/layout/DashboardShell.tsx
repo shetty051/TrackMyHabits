@@ -495,6 +495,7 @@ export default function DashboardShell({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             {isMobileViewport && (
               <button
+                id="mobile-hamburger-btn"
                 onClick={() => setIsMobileMenuOpen(true)}
                 aria-label="Open mobile navigation"
                 style={{
