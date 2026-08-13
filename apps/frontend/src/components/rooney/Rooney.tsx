@@ -213,15 +213,22 @@ export default function Rooney({
           alignItems: 'center',
           ...(isProminent
             ? {
-                top: isMobileViewport ? '10%' : '12%',
+                top: '50%',
                 left: '50%',
-                transform: 'translateX(-50%)',
-                width: isMobileViewport ? '90vw' : 'auto',
-                maxWidth: '440px',
+                transform: 'translate(-50%, -50%)',
+                right: 'auto',
+                bottom: 'auto',
+                width: isMobileViewport ? 'calc(100vw - 2rem)' : 'auto',
+                maxWidth: '420px',
               }
             : {
+                top: 'auto',
+                left: 'auto',
+                transform: 'none',
                 bottom: isMobileViewport ? '1rem' : '1.5rem',
                 right: isMobileViewport ? '1rem' : '1.5rem',
+                width: 'auto',
+                maxWidth: 'none',
               }),
         }}
       >
