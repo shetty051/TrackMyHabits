@@ -1,0 +1,98 @@
+// Prisma Schema for TrackMyHabits
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id                  String         @id @default(uuid())
+  email               String         @unique
+  password            String
+  name                String?
+  age                 Int?
+  sex                 String?
+  avatarUrl           String?
+  themePreference     String         @default("dark")
+  profileCompleteness Int            @default(20)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  habits              Habit[]
+  habitLogs           HabitLog[]
+  userBadges          UserBadge[]
+  notifications       Notification[]
+  chatMessages        ChatMessage[]
+}
+
+model Habit {
+  id               String     @id @default(uuid())
+  userId           String
+  user             User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title            String
+  emoji            String     @default("⚡")
+  color            String     @default("#78866B")
+  frequencyType    String     // "daily" | "alternate" | "specific-days"
+  specificDays     String?    // e.g. "MON,WED,FRI"
+  freezesRemaining Int        @default(3)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  logs             HabitLog[]
+}
+
+model HabitLog {
+  id        String   @id @default(uuid())
+  habitId   String
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date      String   // ISO YYYY-MM-DD format
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date])
+}
+
+model Badge {
+  id          String      @id @default(uuid())
+  name        String      @unique
+  description String
+  iconKey     String
+  category    String      // "streak" | "milestone" | "special"
+
+  userBadges  UserBadge[]
+}
+
+model UserBadge {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badgeId    String
+  badge      Badge    @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+  unlockedAt DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String   // "user" | "assistant" | "system"
+  content   String
+  createdAt DateTime @default(now())
+}
