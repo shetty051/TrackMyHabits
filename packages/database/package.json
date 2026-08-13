@@ -4,8 +4,8 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "build": "prisma generate --schema=prisma/schema.postgres.prisma",
-    "build:sqlite": "prisma generate --schema=prisma/schema.prisma",
+    "build": "prisma generate --schema ./prisma/schema.postgres.prisma",
+    "build:sqlite": "prisma generate --schema ./prisma/schema.prisma",
     "db:generate": "prisma generate",
     "db:push": "prisma db push"
   },
