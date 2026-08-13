@@ -1,6 +1,8 @@
 # Production Dockerfile for NestJS Backend Microservice
 FROM node:20-alpine AS builder
 
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 # Copy root monorepo files
@@ -17,6 +19,9 @@ RUN npm run build:server --workspace=@trackmyhabits/backend
 
 # Production Runner Stage
 FROM node:20-alpine AS runner
+
+RUN apk add --no-cache openssl
+
 WORKDIR /app
 
 ENV NODE_ENV=production

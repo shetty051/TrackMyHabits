@@ -1,7 +1,8 @@
 // Production PostgreSQL Schema for TrackMyHabits Deployment
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
