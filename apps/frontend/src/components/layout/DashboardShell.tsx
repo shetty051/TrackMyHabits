@@ -137,12 +137,23 @@ export default function DashboardShell({
   }, [session]);
 
   useEffect(() => {
-    if (
-      searchParams.get('tutorial') === 'true' ||
-      (typeof window !== 'undefined' && sessionStorage.getItem('tmh_tutorial_active') === 'true')
-    ) {
+    const checkTutorialState = () => {
+      if (
+        searchParams.get('tutorial') === 'true' ||
+        (typeof window !== 'undefined' && sessionStorage.getItem('tmh_tutorial_active') === 'true')
+      ) {
+        setInternalTutorialActive(true);
+      }
+    };
+
+    checkTutorialState();
+
+    const handleStartTutorial = () => {
       setInternalTutorialActive(true);
-    }
+    };
+
+    window.addEventListener('tmh-start-tutorial', handleStartTutorial);
+    return () => window.removeEventListener('tmh-start-tutorial', handleStartTutorial);
   }, [searchParams, pathname]);
 
   const isTutorialOpen = !!externalTutorialActive || internalTutorialActive;

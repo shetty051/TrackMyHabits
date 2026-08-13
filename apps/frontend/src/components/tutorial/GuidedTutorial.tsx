@@ -177,18 +177,31 @@ export default function GuidedTutorial({ active, onComplete }: GuidedTutorialPro
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Restore step index from sessionStorage
+  // Restore step index from sessionStorage & auto-sync with current route
   useEffect(() => {
+    if (!active) return;
+
     if (typeof window !== 'undefined') {
       const savedStep = sessionStorage.getItem('tmh_tutorial_step');
       if (savedStep) {
         const idx = parseInt(savedStep, 10);
         if (!isNaN(idx) && idx >= 0 && idx < TUTORIAL_STEPS.length) {
-          setCurrentStepIdx(idx);
+          const stepRoute = TUTORIAL_STEPS[idx]?.route;
+          if (stepRoute === pathname) {
+            setCurrentStepIdx(idx);
+          } else {
+            const matchingIdx = TUTORIAL_STEPS.findIndex((s) => s.route === pathname);
+            if (matchingIdx !== -1) {
+              setCurrentStepIdx(matchingIdx);
+              sessionStorage.setItem('tmh_tutorial_step', String(matchingIdx));
+            } else {
+              setCurrentStepIdx(idx);
+            }
+          }
         }
       }
     }
-  }, []);
+  }, [active, pathname]);
 
   // Control overlay visibility & smart delays
   useEffect(() => {

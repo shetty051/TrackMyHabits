@@ -262,6 +262,18 @@ function HomeContent() {
 
   const allHabitsStreak = calculateAllHabitsStreak();
 
+  // While session is initializing on page reload, render full-screen loading state to prevent landing page flash
+  if (status === 'loading') {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--surface)', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: '36px', height: '36px', border: '3px solid var(--secondary-accent-alpha)', borderTopColor: 'var(--secondary-accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Loading TrackMyHabits...</span>
+        </div>
+      </div>
+    );
+  }
+
   // If authenticated, render within DashboardShell
   if (status === 'authenticated' && session) {
     return (
@@ -325,7 +337,14 @@ function HomeContent() {
             {/* Test Rooney & Tutorial Controls */}
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
               <button
-                onClick={() => router.push('/?tutorial=true')}
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    sessionStorage.setItem('tmh_tutorial_active', 'true');
+                    sessionStorage.setItem('tmh_tutorial_step', '0');
+                  }
+                  setTutorialOverlayActive(true);
+                  window.dispatchEvent(new CustomEvent('tmh-start-tutorial'));
+                }}
                 style={{
                   padding: '0.65rem 1.1rem',
                   borderRadius: '10px',
