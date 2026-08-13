@@ -142,8 +142,9 @@ export default function Rooney({
 
   // Determine active expression asset URL
   const activeExpressionUrl =
-    ROONEY_EXPRESSION_URLS[currentDialogue.expression] ||
-    ROONEY_EXPRESSION_URLS[RooneyExpression.NEUTRAL];
+    (ROONEY_EXPRESSION_URLS && currentDialogue?.expression && ROONEY_EXPRESSION_URLS[currentDialogue.expression]) ||
+    (ROONEY_EXPRESSIONS && currentDialogue?.expression && ROONEY_EXPRESSIONS[currentDialogue.expression]) ||
+    '/rooney/Neutral.png';
 
   const imageScaleCompensation =
     currentDialogue.expression === RooneyExpression.SLEEPING ||

@@ -33,3 +33,6 @@ export const ROONEY_EXPRESSIONS: Record<RooneyExpression, string> = {
   [RooneyExpression.SLEEPING]: '/rooney/Sleeping.png',
   [RooneyExpression.ANGRY]: '/rooney/Angry.png',
 };
+
+// Alias export for backward compatibility
+export const ROONEY_EXPRESSION_URLS = ROONEY_EXPRESSIONS;
