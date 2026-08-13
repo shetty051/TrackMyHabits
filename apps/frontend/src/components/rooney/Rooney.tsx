@@ -198,13 +198,11 @@ export default function Rooney({
 
       {/* Main Rooney Companion Animated Container */}
       <motion.div
-        layout
-        transition={{
-          type: 'spring',
-          damping: 24,
-          stiffness: 240,
-          mass: 0.8,
-        }}
+        key={isProminent ? 'prominent-container' : 'idle-container'}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.25 }}
         style={{
           position: 'fixed',
           zIndex: 999,
@@ -213,13 +211,13 @@ export default function Rooney({
           alignItems: 'center',
           ...(isProminent
             ? {
-                top: '50%',
+                top: isMobileViewport ? '8%' : '12%',
                 left: '50%',
-                transform: 'translate(-50%, -50%)',
+                transform: 'translateX(-50%)',
                 right: 'auto',
                 bottom: 'auto',
                 width: isMobileViewport ? 'calc(100vw - 2rem)' : 'auto',
-                maxWidth: '420px',
+                maxWidth: '400px',
               }
             : {
                 top: 'auto',
@@ -250,8 +248,8 @@ export default function Rooney({
               pointerEvents: 'auto',
               cursor: 'pointer',
               position: 'relative',
-              width: isMobileViewport ? '140px' : '180px',
-              height: isMobileViewport ? '180px' : '240px',
+              width: isMobileViewport ? '110px' : '150px',
+              height: isMobileViewport ? '140px' : '190px',
               filter: 'drop-shadow(0 10px 24px rgba(0, 0, 0, 0.3))',
               display: 'flex',
               alignItems: 'center',
