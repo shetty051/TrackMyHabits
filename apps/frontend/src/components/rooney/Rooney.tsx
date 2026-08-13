@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, ChevronRight } from 'lucide-react';
-import { RooneyExpression, ROONEY_EXPRESSION_URLS } from './RooneyExpressions';
+import { RooneyExpression, ROONEY_EXPRESSION_URLS, ROONEY_EXPRESSIONS } from './RooneyExpressions';
 import {
   getRandomDialogue,
   DialogueLine,
@@ -33,6 +33,7 @@ export default function Rooney({
   const [internalMode, setInternalMode] = useState<RooneyMode>(showIntroOnLoad ? 'prominent' : 'idle');
   const [introStep, setIntroStep] = useState<number | null>(showIntroOnLoad ? 0 : null);
   const [isMobileViewport, setIsMobileViewport] = useState(false);
+  const [triggerRect, setTriggerRect] = useState<DOMRect | null>(null);
 
   const activeMode = externalMode !== undefined ? externalMode : internalMode;
   const isProminent = activeMode === 'prominent';
@@ -43,6 +44,7 @@ export default function Rooney({
   });
   const [isSpeechOpen, setIsSpeechOpen] = useState(showIntroOnLoad);
 
+  // Resize listener
   useEffect(() => {
     const handleResize = () => {
       setIsMobileViewport(window.innerWidth < 768);
@@ -51,6 +53,31 @@ export default function Rooney({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Track AI Mode Button DOM bounding box dynamically for anchor positioning
+  useEffect(() => {
+    if (!isProminent) return;
+
+    const updateTriggerRect = () => {
+      const el = document.getElementById('ai-mode-btn');
+      if (el) {
+        setTriggerRect(el.getBoundingClientRect());
+      } else {
+        setTriggerRect(null);
+      }
+    };
+
+    updateTriggerRect();
+    const interval = setInterval(updateTriggerRect, 250);
+    window.addEventListener('resize', updateTriggerRect);
+    window.addEventListener('scroll', updateTriggerRect);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('resize', updateTriggerRect);
+      window.removeEventListener('scroll', updateTriggerRect);
+    };
+  }, [isProminent]);
 
   // Sync mode changes
   const updateMode = (newMode: RooneyMode) => {
@@ -67,7 +94,6 @@ export default function Rooney({
         hideFloating ||
         (typeof window !== 'undefined' && sessionStorage.getItem('tmh_tutorial_active') === 'true');
 
-      // Ignore speech/badge popups while tutorial is running
       if (isTutorialActiveNow) return;
 
       if (e.detail?.text && e.detail?.expression) {
@@ -113,7 +139,6 @@ export default function Rooney({
       setIntroStep(nextIdx);
       setCurrentDialogue(ROONEY_INTRO_SEQUENCE[nextIdx]);
     } else {
-      // Intro complete: Return Rooney smoothly to idle mode
       setIntroStep(null);
       setIsSpeechOpen(false);
       updateMode('idle');
@@ -125,11 +150,9 @@ export default function Rooney({
     if (isIntroMode) return;
 
     if (isProminent) {
-      // In prominent mode, click returns Rooney to floating idle mode
       updateMode('idle');
       setIsSpeechOpen(false);
     } else {
-      // In idle mode, click toggles dialogue popup
       if (!isSpeechOpen) {
         const dialogue = getRandomDialogue();
         setCurrentDialogue(dialogue);
@@ -140,7 +163,6 @@ export default function Rooney({
     }
   };
 
-  // Determine active expression asset URL
   const activeExpressionUrl =
     (ROONEY_EXPRESSION_URLS && currentDialogue?.expression && ROONEY_EXPRESSION_URLS[currentDialogue.expression]) ||
     (ROONEY_EXPRESSIONS && currentDialogue?.expression && ROONEY_EXPRESSIONS[currentDialogue.expression]) ||
@@ -159,13 +181,80 @@ export default function Rooney({
 
   const isIntroMode = introStep !== null;
 
-  // HIDE floating widget completely when tutorial is active
   const isTutorialActiveSession =
     typeof window !== 'undefined' && sessionStorage.getItem('tmh_tutorial_active') === 'true';
 
   if (hideFloating || (isTutorialActiveSession && !isProminent)) {
     return null;
   }
+
+  // Calculate container style with viewport boundary clamping
+  const getContainerStyle = (): React.CSSProperties => {
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
+
+    if (!isProminent) {
+      return {
+        position: 'fixed',
+        bottom: isMobileViewport ? '1rem' : '1.5rem',
+        right: isMobileViewport ? '1rem' : '1.5rem',
+        top: 'auto',
+        left: 'auto',
+        transform: 'none',
+        width: 'auto',
+        maxWidth: 'none',
+        zIndex: 999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      };
+    }
+
+    // Prominent Mode Positioning
+    const cardWidth = Math.min(viewportWidth - 32, isMobileViewport ? 340 : 380);
+
+    // Desktop mode with anchor trigger button (#ai-mode-btn)
+    if (triggerRect && !isMobileViewport) {
+      let targetLeft = triggerRect.left + (triggerRect.width / 2) - (cardWidth / 2);
+      const clampedLeft = Math.max(16, Math.min(targetLeft, viewportWidth - cardWidth - 16));
+
+      let targetTop = triggerRect.bottom + 12;
+      if (targetTop + 340 > viewportHeight - 16) {
+        targetTop = Math.max(16, triggerRect.top - 340 - 12);
+      }
+
+      return {
+        position: 'fixed',
+        top: `${targetTop}px`,
+        left: `${clampedLeft}px`,
+        width: `${cardWidth}px`,
+        maxWidth: `${cardWidth}px`,
+        right: 'auto',
+        bottom: 'auto',
+        transform: 'none',
+        zIndex: 999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+      };
+    }
+
+    // Mobile mode or centered modal fallback
+    return {
+      position: 'fixed',
+      top: isMobileViewport ? '8%' : '12%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: `${cardWidth}px`,
+      maxWidth: `${cardWidth}px`,
+      right: 'auto',
+      bottom: 'auto',
+      zIndex: 999,
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+    };
+  };
 
   return (
     <>
@@ -203,39 +292,14 @@ export default function Rooney({
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
         transition={{ duration: 0.25 }}
-        style={{
-          position: 'fixed',
-          zIndex: 999,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          ...(isProminent
-            ? {
-                top: isMobileViewport ? '8%' : '12%',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                right: 'auto',
-                bottom: 'auto',
-                width: isMobileViewport ? 'calc(100vw - 2rem)' : 'auto',
-                maxWidth: '400px',
-              }
-            : {
-                top: 'auto',
-                left: 'auto',
-                transform: 'none',
-                bottom: isMobileViewport ? '1rem' : '1.5rem',
-                right: isMobileViewport ? '1rem' : '1.5rem',
-                width: 'auto',
-                maxWidth: 'none',
-              }),
-        }}
+        style={getContainerStyle()}
       >
-        {/* In Prominent Mode: Rooney Avatar FIRST (Top Center) */}
+        {/* In Prominent Mode: Rooney Avatar FIRST */}
         {isProminent && (
           <motion.div
             onClick={handleRooneyClick}
             animate={{
-              y: [0, -8, 0],
+              y: [0, -6, 0],
             }}
             transition={{
               duration: 3.5,
@@ -248,8 +312,8 @@ export default function Rooney({
               pointerEvents: 'auto',
               cursor: 'pointer',
               position: 'relative',
-              width: isMobileViewport ? '110px' : '150px',
-              height: isMobileViewport ? '140px' : '190px',
+              width: isMobileViewport ? '100px' : '140px',
+              height: isMobileViewport ? '130px' : '180px',
               filter: 'drop-shadow(0 10px 24px rgba(0, 0, 0, 0.3))',
               display: 'flex',
               alignItems: 'center',
@@ -286,26 +350,29 @@ export default function Rooney({
         <AnimatePresence>
           {isSpeechOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 15, scale: 0.9 }}
+              initial={{ opacity: 0, y: 12, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.9 }}
+              exit={{ opacity: 0, y: 10, scale: 0.95 }}
               transition={{ duration: 0.25 }}
               style={{
                 pointerEvents: 'auto',
-                marginTop: isProminent ? '0.75rem' : 0,
+                marginTop: isProminent ? '0.6rem' : 0,
                 marginBottom: isProminent ? 0 : '1rem',
-                maxWidth: isProminent ? (isMobileViewport ? '90vw' : '380px') : (isMobileViewport ? '260px' : '280px'),
                 width: '100%',
-                padding: isMobileViewport ? '1rem 1.1rem' : '1.2rem 1.35rem',
+                maxWidth: '100%',
+                boxSizing: 'border-box',
+                padding: isMobileViewport ? '0.9rem 1rem' : '1.15rem 1.25rem',
                 borderRadius: '18px',
                 backgroundColor: 'var(--surface-card)',
                 border: '1px solid var(--border-color)',
                 boxShadow: '0 12px 36px var(--shadow-color)',
                 color: 'var(--text)',
-                fontSize: isProminent ? (isMobileViewport ? '0.95rem' : '1.05rem') : '0.9rem',
-                lineHeight: 1.5,
+                fontSize: isProminent ? (isMobileViewport ? '0.88rem' : '1rem') : '0.9rem',
+                lineHeight: 1.45,
                 position: 'relative',
                 backdropFilter: 'blur(16px)',
+                overflowWrap: 'break-word',
+                wordBreak: 'break-word',
               }}
             >
               {/* Header Badge */}
@@ -314,7 +381,7 @@ export default function Rooney({
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: '0.5rem',
+                  marginBottom: '0.4rem',
                 }}
               >
                 <div
@@ -347,8 +414,10 @@ export default function Rooney({
                 )}
               </div>
 
-              {/* Dialogue Text */}
-              <p style={{ margin: 0, fontWeight: 500 }}>"{currentDialogue.text}"</p>
+              {/* Dialogue Text with mandatory word wrapping */}
+              <p style={{ margin: 0, fontWeight: 500, overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+                "{currentDialogue.text}"
+              </p>
 
               {/* Action Buttons */}
               {isIntroMode ? (
@@ -356,12 +425,12 @@ export default function Rooney({
                   onClick={handleNextIntroStep}
                   style={{
                     marginTop: '0.85rem',
-                    padding: '0.5rem 1.1rem',
+                    padding: '0.45rem 1rem',
                     borderRadius: '9999px',
                     border: 'none',
                     backgroundColor: 'var(--primary-accent)',
                     color: '#FFFFFF',
-                    fontSize: '0.85rem',
+                    fontSize: '0.82rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
@@ -390,12 +459,12 @@ export default function Rooney({
                   }}
                   style={{
                     marginTop: '0.85rem',
-                    padding: '0.5rem 1.1rem',
+                    padding: '0.45rem 1rem',
                     borderRadius: '9999px',
                     border: 'none',
                     backgroundColor: 'var(--primary-accent)',
                     color: '#FFFFFF',
-                    fontSize: '0.85rem',
+                    fontSize: '0.82rem',
                     fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',

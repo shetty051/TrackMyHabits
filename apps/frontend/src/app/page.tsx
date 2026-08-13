@@ -363,6 +363,7 @@ function HomeContent() {
               </button>
 
               <button
+                id="ai-mode-btn"
                 onClick={() => {
                   setRooneyMode('prominent');
                   window.dispatchEvent(
