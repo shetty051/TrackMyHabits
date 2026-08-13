@@ -4,12 +4,11 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, X, ChevronRight } from 'lucide-react';
-import { RooneyExpression, ROONEY_EXPRESSIONS } from './RooneyExpressions';
+import { RooneyExpression, ROONEY_EXPRESSION_URLS } from './RooneyExpressions';
 import {
-  ROONEY_INTRO_SEQUENCE,
-  DialogueLine,
   getRandomDialogue,
-  ScenarioKey,
+  DialogueLine,
+  ROONEY_INTRO_SEQUENCE,
 } from './rooneyDialogueEngine';
 
 export type RooneyMode = 'idle' | 'prominent';
@@ -18,8 +17,8 @@ interface RooneyProps {
   mode?: RooneyMode;
   showIntroOnLoad?: boolean;
   onIntroComplete?: () => void;
-  customScenario?: ScenarioKey;
   onModeChange?: (mode: RooneyMode) => void;
+  customScenario?: string;
   hideFloating?: boolean;
 }
 
@@ -27,12 +26,13 @@ export default function Rooney({
   mode: externalMode,
   showIntroOnLoad = false,
   onIntroComplete,
-  customScenario,
   onModeChange,
+  customScenario,
   hideFloating = false,
 }: RooneyProps) {
   const [internalMode, setInternalMode] = useState<RooneyMode>(showIntroOnLoad ? 'prominent' : 'idle');
   const [introStep, setIntroStep] = useState<number | null>(showIntroOnLoad ? 0 : null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const activeMode = externalMode !== undefined ? externalMode : internalMode;
   const isProminent = activeMode === 'prominent';
@@ -42,6 +42,15 @@ export default function Rooney({
     expression: RooneyExpression.NEUTRAL,
   });
   const [isSpeechOpen, setIsSpeechOpen] = useState(showIntroOnLoad);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Sync mode changes
   const updateMode = (newMode: RooneyMode) => {
@@ -108,59 +117,69 @@ export default function Rooney({
       setIntroStep(null);
       setIsSpeechOpen(false);
       updateMode('idle');
-      if (onIntroComplete) {
-        onIntroComplete();
-      }
+      if (onIntroComplete) onIntroComplete();
     }
   };
 
   const handleRooneyClick = () => {
-    if (introStep !== null) {
-      handleNextIntroStep();
-      return;
-    }
+    if (isIntroMode) return;
 
-    if (!isSpeechOpen) {
-      const scenarios: ScenarioKey[] = ['idle', 'encouragement', 'roast', 'celebration'];
-      const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-      setCurrentDialogue(getRandomDialogue(randomScenario));
-      setIsSpeechOpen(true);
+    if (isProminent) {
+      // In prominent mode, click returns Rooney to floating idle mode
+      updateMode('idle');
+      setIsSpeechOpen(false);
     } else {
-      const scenarios: ScenarioKey[] = ['idle', 'encouragement', 'roast', 'celebration'];
-      const randomScenario = scenarios[Math.floor(Math.random() * scenarios.length)];
-      setCurrentDialogue(getRandomDialogue(randomScenario));
+      // In idle mode, click toggles dialogue popup
+      if (!isSpeechOpen) {
+        const dialogue = getRandomDialogue();
+        setCurrentDialogue(dialogue);
+        setIsSpeechOpen(true);
+      } else {
+        setIsSpeechOpen(false);
+      }
     }
   };
 
-  const activeExpressionUrl = ROONEY_EXPRESSIONS[currentDialogue.expression] || ROONEY_EXPRESSIONS.NEUTRAL;
+  // Determine active expression asset URL
+  const activeExpressionUrl =
+    ROONEY_EXPRESSION_URLS[currentDialogue.expression] ||
+    ROONEY_EXPRESSION_URLS[RooneyExpression.NEUTRAL];
+
+  const imageScaleCompensation =
+    currentDialogue.expression === RooneyExpression.SLEEPING ||
+    currentDialogue.expression === RooneyExpression.CONFUSED ||
+    currentDialogue.expression === RooneyExpression.BLUSHING ||
+    currentDialogue.expression === RooneyExpression.ROASTING ||
+    currentDialogue.expression === RooneyExpression.DISAPPOINTED ||
+    currentDialogue.expression === RooneyExpression.URGENT ||
+    currentDialogue.expression === RooneyExpression.CELEBRATORY
+      ? 1.28
+      : 1.0;
+
   const isIntroMode = introStep !== null;
 
-  // Check if tutorial is currently active (via prop or sessionStorage)
-  const isTutorialActive =
-    hideFloating ||
-    (typeof window !== 'undefined' && sessionStorage.getItem('tmh_tutorial_active') === 'true');
+  // HIDE floating widget completely when tutorial is active
+  const isTutorialActiveSession =
+    typeof window !== 'undefined' && sessionStorage.getItem('tmh_tutorial_active') === 'true';
 
-  // Scale compensation for smaller raw images (Celebratory & Pointing_2)
-  const isSmallerImage =
-    currentDialogue.expression === RooneyExpression.CELEBRATORY ||
-    currentDialogue.expression === RooneyExpression.POINTING_2;
-  const imageScaleCompensation = isSmallerImage ? 1.36 : 1.0;
-
-  // HIDE floating bottom-right Rooney widget whenever a tutorial is active!
-  if (isTutorialActive && !isProminent) return null;
+  if (hideFloating || (isTutorialActiveSession && !isProminent)) {
+    return null;
+  }
 
   return (
     <>
-      {/* Dimmed backdrop when in prominent mode */}
+      {/* Prominent Mode Full-Screen Backdrop Overlay */}
       <AnimatePresence>
         {isProminent && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
             onClick={() => {
-              if (!isIntroMode) updateMode('idle');
+              if (!isIntroMode) {
+                updateMode('idle');
+                setIsSpeechOpen(false);
+              }
             }}
             style={{
               position: 'fixed',
@@ -169,20 +188,20 @@ export default function Rooney({
               right: 0,
               bottom: 0,
               backgroundColor: 'rgba(0, 0, 0, 0.45)',
-              backdropFilter: 'blur(6px)',
+              backdropFilter: 'blur(8px)',
               zIndex: 998,
             }}
           />
         )}
       </AnimatePresence>
 
-      {/* Main Animated Wrapper for Rooney + Speech Bubble */}
+      {/* Main Rooney Companion Animated Container */}
       <motion.div
         layout
         transition={{
           type: 'spring',
-          damping: 25,
-          stiffness: 200,
+          damping: 24,
+          stiffness: 240,
           mass: 0.8,
         }}
         style={{
@@ -193,13 +212,15 @@ export default function Rooney({
           alignItems: 'center',
           ...(isProminent
             ? {
-                top: '12%',
+                top: isMobileViewport ? '10%' : '12%',
                 left: '50%',
                 transform: 'translateX(-50%)',
+                width: isMobileViewport ? '90vw' : 'auto',
+                maxWidth: '440px',
               }
             : {
-                bottom: '1.5rem',
-                right: '1.5rem',
+                bottom: isMobileViewport ? '1rem' : '1.5rem',
+                right: isMobileViewport ? '1rem' : '1.5rem',
               }),
         }}
       >
@@ -208,10 +229,10 @@ export default function Rooney({
           <motion.div
             onClick={handleRooneyClick}
             animate={{
-              y: [0, -10, 0],
+              y: [0, -8, 0],
             }}
             transition={{
-              duration: 3,
+              duration: 3.5,
               repeat: Infinity,
               ease: 'easeInOut',
             }}
@@ -221,8 +242,8 @@ export default function Rooney({
               pointerEvents: 'auto',
               cursor: 'pointer',
               position: 'relative',
-              width: '180px',
-              height: '240px',
+              width: isMobileViewport ? '140px' : '180px',
+              height: isMobileViewport ? '180px' : '240px',
               filter: 'drop-shadow(0 10px 24px rgba(0, 0, 0, 0.3))',
               display: 'flex',
               alignItems: 'center',
@@ -230,41 +251,52 @@ export default function Rooney({
               zIndex: 1000,
             }}
           >
-            <Image
-              src={activeExpressionUrl}
-              alt="Rooney Character Companion"
-              fill
-              style={{
-                objectFit: 'contain',
-                transform: `scale(${imageScaleCompensation})`,
-                transition: 'transform 0.25s ease',
-              }}
-              priority
-            />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentDialogue.expression}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ duration: 0.2 }}
+                style={{ width: '100%', height: '100%', position: 'relative' }}
+              >
+                <Image
+                  src={activeExpressionUrl}
+                  alt="Rooney Character Companion"
+                  fill
+                  style={{
+                    objectFit: 'contain',
+                    transform: `scale(${imageScaleCompensation})`,
+                    transition: 'transform 0.25s ease',
+                  }}
+                  priority
+                />
+              </motion.div>
+            </AnimatePresence>
           </motion.div>
         )}
 
-        {/* Speech Dialogue Bubble (Below Rooney Avatar in Prominent Mode, Above in Idle Mode) */}
+        {/* Speech Dialogue Bubble */}
         <AnimatePresence>
           {isSpeechOpen && (
             <motion.div
-              initial={{ opacity: 0, y: isProminent ? 15 : 15, scale: 0.9 }}
+              initial={{ opacity: 0, y: 15, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: isProminent ? 10 : 10, scale: 0.9 }}
+              exit={{ opacity: 0, y: 10, scale: 0.9 }}
               transition={{ duration: 0.25 }}
               style={{
                 pointerEvents: 'auto',
                 marginTop: isProminent ? '0.75rem' : 0,
                 marginBottom: isProminent ? 0 : '1rem',
-                maxWidth: isProminent ? '380px' : '280px',
+                maxWidth: isProminent ? (isMobileViewport ? '90vw' : '380px') : (isMobileViewport ? '260px' : '280px'),
                 width: '100%',
-                padding: '1.2rem 1.35rem',
+                padding: isMobileViewport ? '1rem 1.1rem' : '1.2rem 1.35rem',
                 borderRadius: '18px',
                 backgroundColor: 'var(--surface-card)',
                 border: '1px solid var(--border-color)',
                 boxShadow: '0 12px 36px var(--shadow-color)',
                 color: 'var(--text)',
-                fontSize: isProminent ? '1.05rem' : '0.925rem',
+                fontSize: isProminent ? (isMobileViewport ? '0.95rem' : '1.05rem') : '0.9rem',
                 lineHeight: 1.5,
                 position: 'relative',
                 backdropFilter: 'blur(16px)',
@@ -374,12 +406,12 @@ export default function Rooney({
           )}
         </AnimatePresence>
 
-        {/* In Idle Mode: Floating Rooney Character Avatar SECOND */}
+        {/* In Idle Mode: Rooney Floating Avatar SECOND (Docked Bottom Right) */}
         {!isProminent && (
           <motion.div
             onClick={handleRooneyClick}
             animate={{
-              y: [0, -7, 0],
+              y: [0, -6, 0],
             }}
             transition={{
               duration: 3,
@@ -387,31 +419,41 @@ export default function Rooney({
               ease: 'easeInOut',
             }}
             whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.92 }}
             style={{
               pointerEvents: 'auto',
               cursor: 'pointer',
               position: 'relative',
-              width: '80px',
-              height: '115px',
-              transition: 'width 0.3s ease, height 0.3s ease',
-              filter: 'drop-shadow(0 10px 24px rgba(0, 0, 0, 0.3))',
+              width: isMobileViewport ? '56px' : '76px',
+              height: isMobileViewport ? '72px' : '96px',
+              filter: 'drop-shadow(0 6px 16px rgba(0, 0, 0, 0.25))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Image
-              src={activeExpressionUrl}
-              alt="Rooney Character Companion"
-              fill
-              style={{
-                objectFit: 'contain',
-                transform: `scale(${imageScaleCompensation})`,
-                transition: 'transform 0.25s ease',
-              }}
-              priority
-            />
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentDialogue.expression}
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.85 }}
+                transition={{ duration: 0.2 }}
+                style={{ width: '100%', height: '100%', position: 'relative' }}
+              >
+                <Image
+                  src={activeExpressionUrl}
+                  alt="Rooney Character Companion"
+                  fill
+                  style={{
+                    objectFit: 'contain',
+                    transform: `scale(${imageScaleCompensation})`,
+                    transition: 'transform 0.25s ease',
+                  }}
+                  priority
+                />
+              </motion.div>
+            </AnimatePresence>
           </motion.div>
         )}
       </motion.div>

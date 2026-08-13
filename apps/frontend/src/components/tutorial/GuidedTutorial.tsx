@@ -370,6 +370,18 @@ export default function GuidedTutorial({ active, onComplete }: GuidedTutorialPro
     const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1200;
     const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 800;
 
+    // Mobile viewports (<768px): Dock tutorial card safely at bottom center to prevent off-screen clipping
+    if (viewportWidth < 768) {
+      return {
+        position: 'fixed',
+        left: '50%',
+        bottom: '1.25rem',
+        transform: 'translateX(-50%)',
+        width: '92vw',
+        maxWidth: '400px',
+      };
+    }
+
     let computedLeft = 50;
     let computedTop = 50;
 

@@ -51,14 +51,37 @@ export default function DashboardShell({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
+
+  // Navigation Drawer States
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
+
   const [internalTutorialActive, setInternalTutorialActive] = useState(false);
 
   // Notification State
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [isRollingOver, setIsRollingOver] = useState(false);
+
+  // Viewport resize listener for responsive mobile detection
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 768;
+      setIsMobileViewport(isMobile);
+      if (isMobile) {
+        setCollapsed(true);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Close mobile drawer when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   const fetchNotifications = async () => {
     try {
@@ -83,13 +106,6 @@ export default function DashboardShell({
         const profData = await profRes.json();
         const habitsData = await habitsRes.json();
         const user = profData.user;
-        const habits = habitsData.habits || [];
-
-        const todayISO = new Date().toISOString().split('T')[0];
-        const dueCount = habits.length;
-        const completedCount = habits.filter((h: any) =>
-          h.logs?.some((l: any) => l.date === todayISO && l.completed)
-        ).length;
 
         const hasMissed = !!user?.hasUnaddressedMissedHabit;
         if (hasMissed) {
@@ -119,27 +135,6 @@ export default function DashboardShell({
       return () => clearInterval(interval);
     }
   }, [session]);
-
-  const handleFastForwardDay = async () => {
-    setIsRollingOver(true);
-    try {
-      const res = await fetch('/api/cron/rollover', { method: 'POST' });
-      const data = await res.json();
-      if (res.ok) {
-        alert(`⚡ Fast-Forward Day Simulation Complete!\n\n${data.message}`);
-        await fetchNotifications();
-        await checkRooneyMood();
-        // Force refresh current page
-        window.location.reload();
-      } else {
-        alert(`Fast-forward error: ${data.error}`);
-      }
-    } catch (err: any) {
-      alert(`Fast-forward failed: ${err.message}`);
-    } finally {
-      setIsRollingOver(false);
-    }
-  };
 
   useEffect(() => {
     if (
@@ -197,7 +192,7 @@ export default function DashboardShell({
   };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--surface)' }}>
+    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--surface)', position: 'relative' }}>
       {/* Single Global Rooney Companion Instance */}
       <Rooney
         mode={rooneyMode}
@@ -216,126 +211,267 @@ export default function DashboardShell({
         }}
       />
 
-      {/* Sidebar Navigation */}
-      <aside
-        id="nav-sidebar"
-        style={{
-          width: collapsed ? '80px' : '260px',
-          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          backgroundColor: 'var(--surface-card)',
-          borderRight: '1px solid var(--border-color)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '1.5rem 1rem',
-          position: 'sticky',
-          top: 0,
-          height: '100vh',
-          zIndex: 40,
-        }}
-      >
-        {/* Sidebar Brand Header */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            {!collapsed && (
-              <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}>
-                <div
-                  style={{
-                    width: '36px',
-                    height: '36px',
-                    borderRadius: '10px',
-                    backgroundColor: 'var(--primary-accent)',
-                    color: '#FFFFFF',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontWeight: 800,
-                  }}
-                >
-                  T
-                </div>
-                <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)' }}>
-                  TrackMyHabits
-                </span>
-              </Link>
-            )}
-
-            <button
-              onClick={() => setCollapsed(!collapsed)}
-              aria-label="Toggle sidebar"
+      {/* MOBILE BACKDROP & DRAWER OVERLAY (<768px) */}
+      <AnimatePresence>
+        {isMobileViewport && isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
               style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                padding: '0.5rem',
-                borderRadius: '8px',
+                position: 'fixed',
+                inset: 0,
+                backgroundColor: 'rgba(0,0,0,0.55)',
+                backdropFilter: 'blur(4px)',
+                zIndex: 90,
+              }}
+            />
+
+            <motion.aside
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                bottom: 0,
+                width: '280px',
+                backgroundColor: 'var(--surface-card)',
+                borderRight: '1px solid var(--border-color)',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                padding: '1.5rem 1.25rem',
+                zIndex: 100,
+                boxShadow: '0 16px 40px rgba(0,0,0,0.3)',
               }}
             >
-              <Menu size={20} />
-            </button>
-          </div>
+              {/* Mobile Drawer Header */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Link
+                    href="/"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}
+                  >
+                    <div
+                      style={{
+                        width: '36px',
+                        height: '36px',
+                        borderRadius: '10px',
+                        backgroundColor: 'var(--primary-accent)',
+                        color: '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                      }}
+                    >
+                      T
+                    </div>
+                    <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)' }}>
+                      TrackMyHabits
+                    </span>
+                  </Link>
 
-          {/* Navigation Links */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            {navItems.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.href}
-                  id={item.id}
-                  href={item.href}
-                  data-nav-href={item.href}
+                  <button
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    aria-label="Close menu"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--text-muted)',
+                      padding: '0.5rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <X size={22} />
+                  </button>
+                </div>
+
+                {/* Mobile Drawer Navigation Links */}
+                <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {navItems.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        id={item.id}
+                        href={item.href}
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.85rem',
+                          padding: '0.85rem 1rem',
+                          borderRadius: '12px',
+                          color: isActive ? 'var(--secondary-accent)' : 'var(--text-muted)',
+                          backgroundColor: isActive ? 'var(--secondary-accent-alpha)' : 'transparent',
+                          fontWeight: isActive ? 700 : 500,
+                          fontSize: '1rem',
+                          textDecoration: 'none',
+                        }}
+                      >
+                        <span style={{ color: isActive ? 'var(--secondary-accent)' : 'inherit' }}>
+                          {item.icon}
+                        </span>
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </nav>
+              </div>
+
+              {/* Mobile Drawer Logout */}
+              <div>
+                <button
+                  onClick={handleLogout}
                   style={{
+                    width: '100%',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.85rem',
-                    padding: '0.75rem 1rem',
+                    padding: '0.85rem 1rem',
                     borderRadius: '12px',
-                    color: isActive ? 'var(--secondary-accent)' : 'var(--text-muted)',
-                    backgroundColor: isActive ? 'var(--secondary-accent-alpha)' : 'transparent',
-                    fontWeight: isActive ? 700 : 500,
+                    border: '1px solid var(--border-color)',
+                    backgroundColor: 'transparent',
+                    color: 'rgba(239, 68, 68, 0.9)',
+                    fontWeight: 600,
                     fontSize: '0.95rem',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease',
+                    cursor: 'pointer',
                   }}
                 >
-                  <span style={{ color: isActive ? 'var(--secondary-accent)' : 'inherit' }}>{item.icon}</span>
-                  {!collapsed && <span>{item.label}</span>}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+                  <LogOut size={18} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
-        {/* Logout Button */}
-        <div>
-          <button
-            onClick={handleLogout}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.85rem',
-              padding: '0.75rem 1rem',
-              borderRadius: '12px',
-              border: '1px solid var(--border-color)',
-              backgroundColor: 'transparent',
-              color: 'rgba(239, 68, 68, 0.9)',
-              fontWeight: 600,
-              fontSize: '0.9rem',
-              cursor: 'pointer',
-              transition: 'background-color 0.2s ease',
-            }}
-          >
-            <LogOut size={18} />
-            {!collapsed && <span>Logout</span>}
-          </button>
-        </div>
-      </aside>
+      {/* DESKTOP SIDEBAR (Visible >=768px) */}
+      {!isMobileViewport && (
+        <aside
+          id="nav-sidebar"
+          style={{
+            width: collapsed ? '80px' : '260px',
+            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            backgroundColor: 'var(--surface-card)',
+            borderRight: '1px solid var(--border-color)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            padding: '1.5rem 1rem',
+            position: 'sticky',
+            top: 0,
+            height: '100vh',
+            zIndex: 40,
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              {!collapsed && (
+                <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none' }}>
+                  <div
+                    style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '10px',
+                      backgroundColor: 'var(--primary-accent)',
+                      color: '#FFFFFF',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                    }}
+                  >
+                    T
+                  </div>
+                  <span style={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--text)' }}>
+                    TrackMyHabits
+                  </span>
+                </Link>
+              )}
+
+              <button
+                onClick={() => setCollapsed(!collapsed)}
+                aria-label="Toggle sidebar"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  padding: '0.5rem',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Menu size={20} />
+              </button>
+            </div>
+
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {navItems.map((item) => {
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    id={item.id}
+                    href={item.href}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.85rem',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '12px',
+                      color: isActive ? 'var(--secondary-accent)' : 'var(--text-muted)',
+                      backgroundColor: isActive ? 'var(--secondary-accent-alpha)' : 'transparent',
+                      fontWeight: isActive ? 700 : 500,
+                      fontSize: '0.95rem',
+                      textDecoration: 'none',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    <span style={{ color: isActive ? 'var(--secondary-accent)' : 'inherit' }}>{item.icon}</span>
+                    {!collapsed && <span>{item.label}</span>}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div>
+            <button
+              onClick={handleLogout}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.85rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '12px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'transparent',
+                color: 'rgba(239, 68, 68, 0.9)',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease',
+              }}
+            >
+              <LogOut size={18} />
+              {!collapsed && <span>Logout</span>}
+            </button>
+          </div>
+        </aside>
+      )}
 
       {/* Main Content Area */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
@@ -348,22 +484,43 @@ export default function DashboardShell({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '0 2rem',
+            padding: isMobileViewport ? '0 1rem' : '0 2rem',
             position: 'sticky',
             top: 0,
             zIndex: 30,
             backdropFilter: 'blur(10px)',
           }}
         >
-          {/* Breadcrumb / Title */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <h1 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)' }}>
+          {/* Mobile Hamburger & Page Title */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+            {isMobileViewport && (
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                aria-label="Open mobile navigation"
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--border-color)',
+                  backgroundColor: 'var(--surface-hover)',
+                  color: 'var(--text)',
+                  borderRadius: '10px',
+                  padding: '0.45rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                }}
+              >
+                <Menu size={20} />
+              </button>
+            )}
+
+            <h1 className="responsive-title" style={{ fontWeight: 800, color: 'var(--text)' }}>
               {getPageTitle()}
             </h1>
           </div>
 
           {/* Top Bar Actions: Notification Bell + Theme Toggle */}
-          <div id="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', position: 'relative' }}>
+          <div id="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem', position: 'relative' }}>
             {/* Notification Bell Icon with Dynamic Unread Badge */}
             <button
               onClick={() => setIsNotifOpen(!isNotifOpen)}
@@ -384,7 +541,6 @@ export default function DashboardShell({
               }}
             >
               <Bell size={18} />
-              {/* Dynamic Unread Badge Indicator */}
               {unreadCount > 0 && (
                 <span
                   style={{
@@ -423,7 +579,8 @@ export default function DashboardShell({
                     position: 'absolute',
                     top: '52px',
                     right: 0,
-                    width: '360px',
+                    width: isMobileViewport ? 'calc(100vw - 2rem)' : '360px',
+                    maxWidth: '360px',
                     maxHeight: '440px',
                     borderRadius: '18px',
                     backgroundColor: 'var(--surface-card)',
@@ -435,7 +592,6 @@ export default function DashboardShell({
                     overflow: 'hidden',
                   }}
                 >
-                  {/* Dropdown Header */}
                   <div
                     style={{
                       padding: '1rem 1.25rem',
@@ -474,7 +630,6 @@ export default function DashboardShell({
                     )}
                   </div>
 
-                  {/* Dropdown List Body */}
                   <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
                     {notifications.length === 0 ? (
                       <div style={{ padding: '2.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
@@ -524,13 +679,21 @@ export default function DashboardShell({
               )}
             </AnimatePresence>
 
-            {/* Persistent Theme Toggle */}
             <ThemeToggle />
           </div>
         </header>
 
         {/* Route Page Content */}
-        <main style={{ flex: 1, padding: '2rem', maxWidth: '1200px', width: '100%', margin: '0 auto' }}>
+        <main
+          className="mobile-padding"
+          style={{
+            flex: 1,
+            padding: isMobileViewport ? '1.25rem 0.85rem' : '2rem',
+            maxWidth: '1200px',
+            width: '100%',
+            margin: '0 auto',
+          }}
+        >
           {children}
         </main>
       </div>

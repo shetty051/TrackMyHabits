@@ -314,10 +314,10 @@ function HomeContent() {
               >
                 <CheckCircle2 size={14} /> Welcome Back
               </div>
-              <h2 style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--text)' }}>
+              <h2 className="responsive-title" style={{ fontWeight: 800, color: 'var(--text)' }}>
                 Hello, {userName || (session.user?.name && session.user.name !== 'User' ? session.user.name : '') || 'Habit Master'} 👋
               </h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '1rem', marginTop: '0.25rem' }}>
+              <p className="responsive-subtitle" style={{ color: 'var(--text-muted)', marginTop: '0.25rem' }}>
                 Here is your daily habit overview for today.
               </p>
             </div>
@@ -349,8 +349,8 @@ function HomeContent() {
                   window.dispatchEvent(
                     new CustomEvent('rooney-speak', {
                       detail: {
-                        text: 'Oops, AI chat functionality is underway… coming soon! 🐑⚙️',
-                        expression: RooneyExpression.THINKING,
+                        text: "Hey! I'm Rooney, your AI habit companion! How can I help you build better routines today?",
+                        expression: 'ENCOURAGING',
                         mode: 'prominent',
                       },
                     })
@@ -380,7 +380,7 @@ function HomeContent() {
             id="stats-grid"
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: '1.25rem',
             }}
           >

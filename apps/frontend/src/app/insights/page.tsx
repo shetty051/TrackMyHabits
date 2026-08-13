@@ -290,8 +290,8 @@ export default function InsightsPage() {
                 </div>
               </div>
 
-              {/* Custom SVG Bar Chart */}
-              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem', height: '180px', paddingTop: '1rem' }}>
+              {/* Custom Responsive SVG Bar Chart */}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.25rem', height: '180px', paddingTop: '1rem', overflowX: 'hidden' }}>
                 {data.timelineData?.map((item, idx) => (
                   <div
                     key={idx}
@@ -300,13 +300,14 @@ export default function InsightsPage() {
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
-                      gap: '0.5rem',
+                      gap: '0.4rem',
                       height: '100%',
                       justifyContent: 'flex-end',
+                      minWidth: 0,
                     }}
                   >
                     {/* Hover Tooltip Label */}
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-muted)' }}>
+                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--text-muted)' }}>
                       {item.percentage}%
                     </span>
 
@@ -328,8 +329,17 @@ export default function InsightsPage() {
                     />
 
                     {/* X-Axis Date Label */}
-                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                      {item.label}
+                    <span
+                      style={{
+                        fontSize: '0.6rem',
+                        color: 'var(--text-muted)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        maxWidth: '100%',
+                      }}
+                    >
+                      {item.date ? item.date.slice(5) : item.label}
                     </span>
                   </div>
                 ))}

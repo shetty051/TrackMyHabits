@@ -414,10 +414,12 @@ export default function HabitsPage() {
               style={{
                 maxWidth: '480px',
                 width: '100%',
-                padding: '2rem',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                padding: '1.5rem',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1.5rem',
+                gap: '1.25rem',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
