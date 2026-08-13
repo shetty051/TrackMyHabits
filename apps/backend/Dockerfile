@@ -12,8 +12,8 @@ COPY apps/backend ./apps/backend
 RUN npm ci
 
 # Generate Prisma Client & Build NestJS
-RUN npm run build --workspace=packages/database
-RUN npm run build:server --workspace=apps/backend
+RUN npm run build --workspace=@trackmyhabits/database
+RUN npm run build:server --workspace=@trackmyhabits/backend
 
 # Production Runner Stage
 FROM node:20-alpine AS runner
