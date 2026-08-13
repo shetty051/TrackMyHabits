@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build --workspace=apps/frontend",
+  "buildCommand": "npm run build:frontend",
   "outputDirectory": "apps/frontend/.next",
   "crons": [
     {

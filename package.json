@@ -7,8 +7,10 @@
     "packages/*"
   ],
   "scripts": {
-    "dev:frontend": "npm run dev --workspace=apps/frontend",
-    "dev:backend": "npm run start:dev --workspace=apps/backend",
-    "build": "npm run build --workspaces --if-present"
+    "dev:frontend": "npm run dev --workspace=@trackmyhabits/frontend",
+    "dev:backend": "npm run start:dev --workspace=@trackmyhabits/backend",
+    "build:frontend": "npm run build --workspace=@trackmyhabits/database && npm run build --workspace=@trackmyhabits/frontend",
+    "build:backend": "npm run build --workspace=@trackmyhabits/database && npm run build --workspace=@trackmyhabits/backend",
+    "build": "npm run build:frontend"
   }
 }
