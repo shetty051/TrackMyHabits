@@ -10,5 +10,8 @@
     "build": "npx prisma generate --schema=packages/database/prisma/schema.postgres.prisma && npm run build --workspace=apps/frontend",
     "dev:frontend": "npm run dev --workspace=apps/frontend",
     "dev:backend": "npm run start:dev --workspace=apps/backend"
+  },
+  "devDependencies": {
+    "next": "^14.2.5"
   }
 }
