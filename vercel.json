@@ -1,8 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
   "buildCommand": "npx prisma generate --schema=packages/database/prisma/schema.postgres.prisma && npm run build --workspace=apps/frontend",
-  "outputDirectory": "apps/frontend/.next",
   "crons": [
     {
       "path": "/api/cron/rollover",
