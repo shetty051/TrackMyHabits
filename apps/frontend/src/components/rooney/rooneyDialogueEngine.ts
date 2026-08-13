@@ -111,13 +111,19 @@ export const ROONEY_SCENARIOS: Record<ScenarioKey, DialogueLine[]> = {
 
 const lastPickedIndices: Partial<Record<ScenarioKey, number>> = {};
 
-export function getRandomDialogue(scenario: ScenarioKey): DialogueLine {
-  const lines = ROONEY_SCENARIOS[scenario];
-  if (!lines || lines.length === 0) {
-    return { text: "Hello there!", expression: RooneyExpression.NEUTRAL };
+export function getRandomDialogue(scenario: ScenarioKey = 'idle'): DialogueLine {
+  let targetScenario = scenario;
+  if (scenario === 'idle') {
+    const idlePools: ScenarioKey[] = ['idle', 'roast', 'encouragement', 'sleeping'];
+    targetScenario = idlePools[Math.floor(Math.random() * idlePools.length)];
   }
 
-  const lastIndex = lastPickedIndices[scenario];
+  const lines = ROONEY_SCENARIOS[targetScenario] || ROONEY_SCENARIOS.idle;
+  if (!lines || lines.length === 0) {
+    return { text: "Consistency is key! You're doing great today!", expression: RooneyExpression.NEUTRAL };
+  }
+
+  const lastIndex = lastPickedIndices[targetScenario];
   let newIndex: number;
 
   if (lines.length === 1) {
@@ -128,6 +134,6 @@ export function getRandomDialogue(scenario: ScenarioKey): DialogueLine {
     } while (newIndex === lastIndex);
   }
 
-  lastPickedIndices[scenario] = newIndex;
+  lastPickedIndices[targetScenario] = newIndex;
   return lines[newIndex];
 }

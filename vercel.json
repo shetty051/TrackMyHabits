@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run build --workspace=apps/frontend",
+  "outputDirectory": "apps/frontend/.next",
+  "crons": [
+    {
+      "path": "/api/cron/rollover",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
