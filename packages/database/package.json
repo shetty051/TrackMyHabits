@@ -4,10 +4,11 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "build": "prisma generate --schema ./prisma/schema.postgres.prisma",
-    "build:sqlite": "prisma generate --schema ./prisma/schema.prisma",
+    "build": "prisma generate",
+    "build:sqlite": "prisma generate",
     "db:generate": "prisma generate",
-    "db:push": "prisma db push"
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev"
   },
   "devDependencies": {
     "prisma": "^5.17.0"
