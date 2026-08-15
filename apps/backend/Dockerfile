@@ -5,7 +5,7 @@ RUN apk add --no-cache openssl
 
 WORKDIR /app
 
-# Copy root monorepo files
+# Copy root monorepo files assuming build context is root
 COPY package.json package-lock.json ./
 COPY packages/database ./packages/database
 COPY apps/backend ./apps/backend

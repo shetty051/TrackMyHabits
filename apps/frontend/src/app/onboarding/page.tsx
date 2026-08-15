@@ -245,7 +245,7 @@ export default function OnboardingPage() {
             minHeight: '440px',
             display: 'flex',
             flexDirection: 'column',
-            justify: 'space-between',
+            justifyContent: 'space-between',
             position: 'relative',
             overflow: 'hidden',
           }}

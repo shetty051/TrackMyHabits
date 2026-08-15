@@ -701,7 +701,7 @@ export default function GuidedTutorial({ active, onComplete }: GuidedTutorialPro
             <div
               style={{
                 display: 'flex',
-                justify: 'space-between',
+                justifyContent: 'space-between',
                 alignItems: 'center',
                 marginTop: '0.2rem',
               }}

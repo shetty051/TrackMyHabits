@@ -84,6 +84,6 @@ export function getRealtimeRooneyMood(
     text: `⚠️ URGENT ALERT! Only ${timeString} left before midnight! Complete your ${incompleteCount} habit${
       incompleteCount === 1 ? '' : 's'
     } now to protect your streak! ⏳`,
-    expression: RooneyExpression.URGENT,
+    expression: RooneyExpression.CONCERNED,
   };
 }

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '../../auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/[...nextauth]/auth-options';
 import { prisma } from '@trackmyhabits/database';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
-import { v4 as uuidv4 } from 'crypto';
+import { randomUUID } from 'crypto';
 
 export async function POST(req: Request) {
   try {
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
     // Generate unique filename
     const ext = file.name.split('.').pop() || 'png';
-    const filename = `${userId}-${Date.now()}.${ext}`;
+    const filename = `${randomUUID()}.${ext}`;
     const filePath = path.join(uploadDir, filename);
 
     await writeFile(filePath, buffer);

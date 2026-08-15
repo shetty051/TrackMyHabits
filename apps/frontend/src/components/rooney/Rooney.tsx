@@ -290,7 +290,7 @@ export default function Rooney({
     activeExpression === RooneyExpression.BLUSHING ||
     activeExpression === RooneyExpression.ROASTING ||
     activeExpression === RooneyExpression.DISAPPOINTED ||
-    activeExpression === RooneyExpression.URGENT ||
+    activeExpression === RooneyExpression.CONCERNED ||
     activeExpression === RooneyExpression.CELEBRATORY
       ? 1.28
       : 1.0;
