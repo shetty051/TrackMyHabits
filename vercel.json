@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx prisma generate --schema=packages/database/prisma/schema.prisma && npm run build --workspace=apps/frontend",
+  "buildCommand": "npx prisma generate --schema=../../packages/database/prisma/schema.prisma && next build",
   "crons": [
     {
       "path": "/api/cron/rollover",
