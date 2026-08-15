@@ -222,8 +222,8 @@ export default function DashboardShellContent({
                     transition: 'all 0.15s ease',
                   }}
                 >
-                  <Icon size={20} color={isActive ? 'var(--accent-sage-dark)' : 'var(--text-tertiary)'} />
-                  {(!collapsed || isMobileViewport) && <span>{item.label}</span>}
+                  <Icon size={20} style={{ color: isActive ? 'var(--primary-accent)' : 'var(--text-muted)', flexShrink: 0 }} />
+                  {(!collapsed || isMobileViewport) && <span style={{ color: isActive ? 'var(--primary-accent)' : 'var(--text)' }}>{item.label}</span>}
                 </Link>
               );
             })}
@@ -346,15 +346,16 @@ export default function DashboardShellContent({
                     transition={{ duration: 0.15 }}
                     style={{
                       position: 'absolute',
-                      top: '50px',
+                      top: '52px',
                       right: 0,
-                      width: '320px',
+                      width: '340px',
                       maxWidth: 'calc(100vw - 32px)',
-                      backgroundColor: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-subtle)',
-                      borderRadius: '14px',
-                      boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
-                      zIndex: 100,
+                      backgroundColor: 'var(--surface)',
+                      opacity: 1,
+                      border: '1px solid var(--border-color)',
+                      borderRadius: '16px',
+                      boxShadow: '0 16px 40px var(--shadow-color), 0 4px 16px rgba(0,0,0,0.15)',
+                      zIndex: 1000,
                       overflow: 'hidden',
                     }}
                   >
@@ -388,13 +389,13 @@ export default function DashboardShellContent({
                       )}
                     </div>
 
-                    <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    <div style={{ maxHeight: '320px', overflowY: 'auto', backgroundColor: 'var(--surface)' }}>
                       {notifications.length === 0 ? (
                         <div
                           style={{
                             padding: '1.5rem',
                             textAlign: 'center',
-                            color: 'var(--text-tertiary)',
+                            color: 'var(--text-muted)',
                             fontSize: '0.85rem',
                           }}
                         >
@@ -406,14 +407,14 @@ export default function DashboardShellContent({
                             key={n.id}
                             style={{
                               padding: '0.85rem 1rem',
-                              borderBottom: '1px solid var(--border-subtle)',
-                              backgroundColor: n.read ? 'transparent' : 'var(--accent-sage-subtle)',
+                              borderBottom: '1px solid var(--border-color)',
+                              backgroundColor: n.read ? 'var(--surface)' : 'var(--surface-card)',
                             }}
                           >
-                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text)', fontWeight: n.read ? 400 : 600 }}>
                               {n.message}
                             </p>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                               {new Date(n.createdAt).toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit',

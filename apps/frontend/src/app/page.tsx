@@ -45,17 +45,18 @@ interface Habit {
 }
 
 function isHabitDueOnDate(habit: Habit, dateObj: Date): boolean {
-  if (habit.frequencyType === 'daily') return true;
+  if (!habit) return false;
+  if (!habit.frequencyType || habit.frequencyType === 'daily') return true;
 
   if (habit.frequencyType === 'specific-days') {
-    if (!habit.specificDays) return true;
+    if (!habit.specificDays || habit.specificDays.trim() === '') return true;
     const days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     const currentDay = days[dateObj.getDay()];
     return habit.specificDays.toUpperCase().includes(currentDay);
   }
 
   if (habit.frequencyType === 'alternate') {
-    const created = new Date(habit.createdAt);
+    const created = new Date(habit.createdAt || Date.now());
     const diffTime = Math.abs(dateObj.getTime() - created.getTime());
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     return diffDays % 2 === 0;
@@ -74,9 +75,17 @@ function HomeContent() {
   const [rooneyMode, setRooneyMode] = useState<RooneyMode>(isIntroQuery ? 'prominent' : 'idle');
   const [tutorialOverlayActive, setTutorialOverlayActive] = useState<boolean>(false);
 
-  // Habits Data & Metrics State
-  const [habits, setHabits] = useState<Habit[]>([]);
-  const [loadingHabits, setLoadingHabits] = useState(true);
+  // Habits Data & Metrics State (Cached from sessionStorage for zero-latency redirects)
+  const [habits, setHabits] = useState<Habit[]>(() => {
+    if (typeof window !== 'undefined') {
+      const cached = sessionStorage.getItem('tmh_cached_habits');
+      if (cached) {
+        try { return JSON.parse(cached); } catch (e) {}
+      }
+    }
+    return [];
+  });
+  const [loadingHabits, setLoadingHabits] = useState(!habits.length);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const [hasSeenTutorial, setHasSeenTutorial] = useState<boolean>(true);
@@ -87,7 +96,11 @@ function HomeContent() {
       const res = await fetch('/api/habits');
       if (res.ok) {
         const data = await res.json();
-        setHabits(data.habits || []);
+        const freshHabits = data.habits || [];
+        setHabits(freshHabits);
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('tmh_cached_habits', JSON.stringify(freshHabits));
+        }
       }
     } catch (err) {
       console.error('Failed to fetch dashboard habits', err);
