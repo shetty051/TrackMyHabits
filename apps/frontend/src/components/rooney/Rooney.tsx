@@ -772,28 +772,57 @@ export default function Rooney({
                   hyphens: 'auto',
                 }}
               >
-                {/* Header Badge */}
+                {/* Header Badge & Character Avatar */}
                 <div
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    marginBottom: '0.4rem',
+                    marginBottom: '0.6rem',
                   }}
                 >
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.4rem',
-                      color: 'var(--secondary-accent)',
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
+                      gap: '0.6rem',
                     }}
                   >
-                    <Sparkles size={14} /> Rooney
+                    <div
+                      style={{
+                        position: 'relative',
+                        width: '38px',
+                        height: '48px',
+                        flexShrink: 0,
+                        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.2))',
+                      }}
+                    >
+                      <Image
+                        src={activeExpressionUrl}
+                        alt="Rooney Avatar"
+                        fill
+                        style={{ objectFit: 'contain' }}
+                      />
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          color: 'var(--primary-accent)',
+                          fontSize: '0.8rem',
+                          fontWeight: 700,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        <Sparkles size={14} /> Rooney
+                      </div>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        {isIntroMode ? 'Welcome Guide' : 'AI Companion'}
+                      </span>
+                    </div>
                   </div>
                   {!isIntroMode && (
                     <button
@@ -803,10 +832,10 @@ export default function Rooney({
                         border: 'none',
                         color: 'var(--text-muted)',
                         cursor: 'pointer',
-                        padding: '2px',
+                        padding: '4px',
                       }}
                     >
-                      <X size={14} />
+                      <X size={16} />
                     </button>
                   )}
                 </div>

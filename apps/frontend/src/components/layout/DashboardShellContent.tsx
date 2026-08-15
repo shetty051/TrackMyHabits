@@ -121,15 +121,17 @@ export default function DashboardShellContent({
         style={{
           width: isMobileViewport ? '100%' : collapsed ? '80px' : '260px',
           transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-          borderRight: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-secondary)',
+          borderRight: '1px solid var(--border-color)',
+          backgroundColor: 'var(--surface)',
+          opacity: 1,
+          boxShadow: isMobileViewport ? '0 16px 40px var(--shadow-color)' : 'none',
           display: isMobileViewport && !isMobileMenuOpen ? 'none' : 'flex',
           flexDirection: 'column',
           position: isMobileViewport ? 'fixed' : 'sticky',
           top: 0,
           left: 0,
           height: '100vh',
-          zIndex: 40,
+          zIndex: isMobileViewport ? 900 : 40,
         }}
       >
         {/* Sidebar Header / Logo */}
