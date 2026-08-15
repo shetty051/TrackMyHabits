@@ -8,6 +8,7 @@ import { RooneyExpression } from '../components/rooney/RooneyExpressions';
 import DashboardShell from '../components/layout/DashboardShell';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import Toast from '../components/Toast';
 import {
   ArrowRight,
   Sparkles,
@@ -74,6 +75,7 @@ function HomeContent() {
   const [triggerIntro, setTriggerIntro] = useState(isIntroQuery);
   const [rooneyMode, setRooneyMode] = useState<RooneyMode>(isIntroQuery ? 'prominent' : 'idle');
   const [tutorialOverlayActive, setTutorialOverlayActive] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Habits Data & Metrics State (Cached from sessionStorage for zero-latency redirects)
   const [habits, setHabits] = useState<Habit[]>(() => {
@@ -135,6 +137,10 @@ function HomeContent() {
     setRooneyMode((prev) => (prev === 'idle' ? 'prominent' : 'idle'));
   };
 
+  // Dates & Metrics Computation (Standardized Local Date string YYYY-MM-DD)
+  const todayObj = new Date();
+  const todayISO = todayObj.toLocaleDateString('en-CA');
+
   // Toggle Habit Completion Log for Today (Optimistic UI Update)
   const handleToggleHabitLog = async (habitId: string) => {
     setTogglingId(habitId);
@@ -168,13 +174,19 @@ function HomeContent() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to toggle habit log');
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to toggle habit log');
       }
 
       const data = await res.json();
 
-      // Background sync fresh state
-      fetchHabits();
+      // Synchronize cached habits in sessionStorage without triggering full page refetch
+      if (typeof window !== 'undefined') {
+        setHabits((currentHabits) => {
+          sessionStorage.setItem('tmh_cached_habits', JSON.stringify(currentHabits));
+          return currentHabits;
+        });
+      }
 
       // Trigger Rooney celebration if badge was newly unlocked
       if (data.newlyUnlocked && data.newlyUnlocked.length > 0) {
@@ -202,16 +214,13 @@ function HomeContent() {
       console.error('Log habit error:', err);
       // Revert optimistic update on failure
       setHabits(previousHabits);
-      alert(err.message || 'Failed to toggle habit log');
+      setToastMessage(err.message || 'Failed to toggle habit log');
     } finally {
       setTogglingId(null);
     }
   };
 
   // Dates & Metrics Computation
-  const todayObj = new Date();
-  const todayISO = todayObj.toISOString().split('T')[0];
-
   const dueHabitsToday = habits.filter((h) => isHabitDueOnDate(h, todayObj));
   const completedTodayHabits = dueHabitsToday.filter((h) =>
     h.logs?.some((l) => l.date === todayISO && l.completed)
@@ -618,6 +627,15 @@ function HomeContent() {
               </div>
             )}
           </div>
+
+          {/* Non-blocking Toast Error Banner */}
+          {toastMessage && (
+            <Toast
+              message={toastMessage}
+              type="error"
+              onClose={() => setToastMessage(null)}
+            />
+          )}
         </div>
       </DashboardShell>
     );

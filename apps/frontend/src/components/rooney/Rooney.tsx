@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, X, ChevronRight, Send, Loader2, Award, TrendingUp, Lightbulb, Zap } from 'lucide-react';
+import { Sparkles, X, ChevronRight, ChevronLeft, Send, Loader2, Award, TrendingUp, Lightbulb, Zap } from 'lucide-react';
 import { RooneyExpression, ROONEY_EXPRESSION_URLS, ROONEY_EXPRESSIONS } from './RooneyExpressions';
 import {
   getRandomDialogue,
@@ -127,7 +127,7 @@ export default function Rooney({
   useEffect(() => {
     if (!showIntroOnLoad && !isProminent) {
       fetchRealtimeMood();
-      const interval = setInterval(fetchRealtimeMood, 15000);
+      const interval = setInterval(fetchRealtimeMood, 60000);
       return () => clearInterval(interval);
     }
   }, [showIntroOnLoad, isProminent]);
@@ -258,6 +258,14 @@ export default function Rooney({
     }
   };
 
+  const handlePrevIntroStep = () => {
+    if (introStep !== null && introStep > 0) {
+      const prevIdx = introStep - 1;
+      setIntroStep(prevIdx);
+      setCurrentDialogue(ROONEY_INTRO_SEQUENCE[prevIdx]);
+    }
+  };
+
   const handleRooneyClick = () => {
     if (isIntroMode) return;
 
@@ -271,9 +279,14 @@ export default function Rooney({
     }
   };
 
-  // Expression Rule for AI Mode:
-  // In Prominent/AI mode, Rooney ONLY uses THINKING (while awaiting response) and NEUTRAL expressions
-  const activeExpression = isProminent
+  const isIntroMode = introStep !== null;
+
+  // Expression Rule:
+  // - In Intro Mode or Idle Dialogue: use currentDialogue's assigned expression
+  // - In Prominent AI Chat mode: use THINKING (while awaiting response) or NEUTRAL
+  const activeExpression = isIntroMode
+    ? currentDialogue?.expression || RooneyExpression.NEUTRAL
+    : isProminent
     ? isAiLoading
       ? RooneyExpression.THINKING
       : RooneyExpression.NEUTRAL
@@ -295,8 +308,6 @@ export default function Rooney({
       ? 1.28
       : 1.0;
 
-  const isIntroMode = introStep !== null;
-
   if (hideFloating) {
     return null;
   }
@@ -314,12 +325,32 @@ export default function Rooney({
         left: 'auto',
         transform: 'none',
         width: 'auto',
-        maxWidth: isMobileViewport ? 'calc(100vw - 32px)' : '320px',
+        maxWidth: isMobileViewport ? 'calc(100vw - 32px)' : '360px',
         boxSizing: 'border-box',
         zIndex: 999,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-end',
+      };
+    }
+
+    // Prominent Intro Mode: Centered floating mascot with dialogue card relative to him
+    if (isIntroMode) {
+      return {
+        position: 'fixed',
+        top: isMobileViewport ? 'auto' : '50%',
+        bottom: isMobileViewport ? '1.5rem' : 'auto',
+        left: isMobileViewport ? '16px' : '50%',
+        right: isMobileViewport ? '16px' : 'auto',
+        transform: isMobileViewport ? 'none' : 'translate(-50%, -50%)',
+        width: isMobileViewport ? 'calc(100vw - 32px)' : '460px',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
+        zIndex: 999,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.85rem',
       };
     }
 
@@ -772,7 +803,7 @@ export default function Rooney({
                   hyphens: 'auto',
                 }}
               >
-                {/* Header Badge & Character Avatar */}
+                {/* Header Badge */}
                 <div
                   style={{
                     display: 'flex',
@@ -785,44 +816,15 @@ export default function Rooney({
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.6rem',
+                      gap: '0.4rem',
+                      color: 'var(--primary-accent)',
+                      fontSize: '0.8rem',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
                     }}
                   >
-                    <div
-                      style={{
-                        position: 'relative',
-                        width: '38px',
-                        height: '48px',
-                        flexShrink: 0,
-                        filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.2))',
-                      }}
-                    >
-                      <Image
-                        src={activeExpressionUrl}
-                        alt="Rooney Avatar"
-                        fill
-                        style={{ objectFit: 'contain' }}
-                      />
-                    </div>
-                    <div>
-                      <div
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          color: 'var(--primary-accent)',
-                          fontSize: '0.8rem',
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
-                        }}
-                      >
-                        <Sparkles size={14} /> Rooney
-                      </div>
-                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                        {isIntroMode ? 'Welcome Guide' : 'AI Companion'}
-                      </span>
-                    </div>
+                    <Sparkles size={14} /> Rooney • {isIntroMode ? 'Welcome Guide' : 'AI Companion'}
                   </div>
                   {!isIntroMode && (
                     <button
@@ -847,43 +849,72 @@ export default function Rooney({
 
                 {/* Action Buttons */}
                 {isIntroMode && (
-                  <button
-                    onClick={handleNextIntroStep}
+                  <div
                     style={{
-                      marginTop: '0.85rem',
-                      padding: '0.45rem 1rem',
-                      borderRadius: '9999px',
-                      border: 'none',
-                      backgroundColor: 'var(--primary-accent)',
-                      color: '#FFFFFF',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
                       display: 'flex',
+                      justifyContent: 'space-between',
                       alignItems: 'center',
-                      gap: '0.35rem',
-                      float: 'right',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      marginTop: '0.85rem',
                     }}
                   >
-                    {introStep < 4 ? (
-                      <>
-                        Next <ChevronRight size={14} />
-                      </>
-                    ) : (
-                      <>
-                        Got it! <Sparkles size={14} />
-                      </>
-                    )}
-                  </button>
+                    <div>
+                      {introStep > 0 && (
+                        <button
+                          onClick={handlePrevIntroStep}
+                          style={{
+                            padding: '0.45rem 0.9rem',
+                            borderRadius: '9999px',
+                            border: '1px solid var(--border-color)',
+                            backgroundColor: 'transparent',
+                            color: 'var(--text)',
+                            fontSize: '0.82rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.3rem',
+                          }}
+                        >
+                          <ChevronLeft size={14} /> Back
+                        </button>
+                      )}
+                    </div>
+                    <button
+                      onClick={handleNextIntroStep}
+                      style={{
+                        padding: '0.45rem 1rem',
+                        borderRadius: '9999px',
+                        border: 'none',
+                        backgroundColor: 'var(--primary-accent)',
+                        color: '#FFFFFF',
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      }}
+                    >
+                      {introStep < 4 ? (
+                        <>
+                          Next <ChevronRight size={14} />
+                        </>
+                      ) : (
+                        <>
+                          Got it! <Sparkles size={14} />
+                        </>
+                      )}
+                    </button>
+                  </div>
                 )}
               </motion.div>
             )}
           </AnimatePresence>
         )}
 
-        {/* In Idle Mode: Rooney Floating Avatar SECOND (Docked Bottom Right) */}
-        {!isProminent && (
+        {/* Standalone Floating Rooney Mascot (Independent element scaled for intro vs idle mode) */}
+        {!isProminent || isIntroMode ? (
           <motion.div
             onClick={handleRooneyClick}
             animate={{
@@ -894,18 +925,32 @@ export default function Rooney({
               repeat: Infinity,
               ease: 'easeInOut',
             }}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
             style={{
               pointerEvents: 'auto',
               cursor: 'pointer',
               position: 'relative',
-              width: isMobileViewport ? '56px' : '76px',
-              height: isMobileViewport ? '72px' : '96px',
-              filter: 'drop-shadow(0 6px 16px rgba(0, 0, 0, 0.25))',
+              width: isIntroMode
+                ? isMobileViewport
+                  ? '110px'
+                  : '140px'
+                : isMobileViewport
+                ? '56px'
+                : '76px',
+              height: isIntroMode
+                ? isMobileViewport
+                  ? '140px'
+                  : '180px'
+                : isMobileViewport
+                ? '72px'
+                : '96px',
+              filter: 'drop-shadow(0 8px 24px rgba(0, 0, 0, 0.3))',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              order: isIntroMode ? -1 : 1, // Render ABOVE dialogue card in intro mode
+              marginBottom: isIntroMode ? '0.5rem' : 0,
             }}
           >
             <AnimatePresence mode="wait">
@@ -931,7 +976,7 @@ export default function Rooney({
               </motion.div>
             </AnimatePresence>
           </motion.div>
-        )}
+        ) : null}
       </motion.div>
     </>
   );

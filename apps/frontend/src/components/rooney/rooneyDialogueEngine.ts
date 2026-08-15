@@ -28,7 +28,7 @@ export const ROONEY_INTRO_SEQUENCE: DialogueLine[] = [
   },
   {
     text: "Yeah, they just removed 'ma' from maroon and added 'ey' in the end to get my name.",
-    expression: RooneyExpression.POINTING_2,
+    expression: RooneyExpression.SAD,
   },
   {
     text: "As you can see, the creator is not very creative.",

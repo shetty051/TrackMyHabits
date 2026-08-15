@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import DashboardShell from '../../components/layout/DashboardShell';
 import { RooneyExpression } from '../../components/rooney/RooneyExpressions';
+import Toast from '../../components/Toast';
 import {
   CheckSquare,
   Plus,
@@ -36,6 +37,7 @@ export default function HabitsPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
   const [freezingHabitId, setFreezingHabitId] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Form State
   const [title, setTitle] = useState('');
@@ -147,7 +149,7 @@ export default function HabitsPage() {
       }
       await fetchHabits();
     } catch (err: any) {
-      alert('Error deleting habit: ' + err.message);
+      setToastMessage('Error deleting habit: ' + err.message);
     }
   };
 
@@ -198,7 +200,7 @@ export default function HabitsPage() {
 
       await fetchHabits();
     } catch (err: any) {
-      alert(err.message);
+      setToastMessage(err.message);
     } finally {
       setFreezingHabitId(null);
     }
@@ -558,6 +560,13 @@ export default function HabitsPage() {
               </form>
             </div>
           </div>
+        )}
+        {toastMessage && (
+          <Toast
+            message={toastMessage}
+            type="error"
+            onClose={() => setToastMessage(null)}
+          />
         )}
       </div>
     </DashboardShell>
