@@ -19,136 +19,41 @@ export interface TutorialStep {
 }
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
-  // Step 0 (UI Step 1): Home Dashboard Stats (Route: /)
   {
     targetId: 'stats-grid',
-    title: 'Home Dashboard Stats',
-    text: 'Welcome! Check out your stats grid including your All-Habits Streak and 7-day completion average.',
+    title: 'Dashboard Overview',
+    text: 'Welcome! Here is your daily completion average and overall habits streak.',
     expression: RooneyExpression.POINTING_2,
+    route: '/',
+    position: 'bottom',
+  },
+  {
+    targetId: 'habits-checklist',
+    title: "Today's Habit Checklist",
+    text: 'Click the checkmark circle next to any habit to instantly log completion for today!',
+    expression: RooneyExpression.ENCOURAGING,
     route: '/',
     position: 'top',
   },
-
-  // Step 1 (UI Step 2): Theme & Notifications (Route: /)
   {
     targetId: 'header-actions',
     title: 'Theme & Notifications',
-    text: 'Switch between dark and light themes here, and keep an eye on real-time notification alerts!',
-    expression: RooneyExpression.ENCOURAGING,
+    text: 'Toggle between dark and light modes here, and check your real-time notification badge alerts!',
+    expression: RooneyExpression.WINK,
     route: '/',
     position: 'bottom',
   },
-
-  // Step 2 (UI Step 3): Navigation Menu Sidebar (Route: /)
   {
     targetId: 'nav-sidebar',
     title: 'Navigation Sidebar',
-    text: 'Here is your navigation sidebar! Use it anytime to jump between Dashboard, Insights, Rewards, Profile, and My Habits.',
-    expression: RooneyExpression.POINTING,
+    text: 'Use the sidebar anytime to jump between Dashboard, Insights, Rewards, and Profile!',
+    expression: RooneyExpression.CELEBRATORY,
     route: '/',
-    position: 'right',
-  },
-
-  // Step 3 (UI Step 4): Navigate to Insights (Route: /, expects click to /insights)
-  {
-    targetId: 'nav-item-insights',
-    title: 'Navigate to Insights',
-    text: "Let's explore Insights & Analytics! Click on 'Insights' in the sidebar to view your progress trends.",
-    expression: RooneyExpression.POINTING,
-    route: '/',
-    nextExpectedRoute: '/insights',
-    requiresNavClick: true,
-    position: 'right',
-  },
-
-  // Step 4 (UI Step 5): Insights Overview (Route: /insights) -> 1.5s DELAY
-  {
-    targetId: 'insights-overview',
-    title: 'Insights & Analytics',
-    text: 'Here you can track your completion trends, rolling 7-day averages, and consistency analytics!',
-    expression: RooneyExpression.THINKING,
-    route: '/insights',
-    position: 'bottom',
-  },
-
-  // Step 5 (UI Step 6): Navigate to Rewards (Route: /insights, expects click to /rewards)
-  {
-    targetId: 'nav-item-rewards',
-    title: 'Navigate to Rewards',
-    text: "Next up, Rewards & Badges! Click on 'Rewards' in the sidebar.",
-    expression: RooneyExpression.POINTING,
-    route: '/insights',
-    nextExpectedRoute: '/rewards',
-    requiresNavClick: true,
-    position: 'right',
-  },
-
-  // Step 6 (UI Step 7): Rewards Overview (Route: /rewards) -> 1.5s DELAY
-  {
-    targetId: 'rewards-overview',
-    title: 'Rewards & Badges Showcase',
-    text: 'Earn badges as you hit milestone streaks and level up your habit consistency!',
-    expression: RooneyExpression.CELEBRATORY,
-    route: '/rewards',
-    position: 'bottom',
-  },
-
-  // Step 7 (UI Step 8): Navigate to Profile (Route: /rewards, expects click to /profile)
-  {
-    targetId: 'nav-item-profile',
-    title: 'Navigate to Profile',
-    text: "Lastly, let's view your Profile. Click on 'Profile' in the sidebar.",
-    expression: RooneyExpression.POINTING,
-    route: '/rewards',
-    nextExpectedRoute: '/profile',
-    requiresNavClick: true,
-    position: 'right',
-  },
-
-  // Step 8 (UI Step 9): Profile Overview (Route: /profile) -> 1.5s DELAY
-  {
-    targetId: 'profile-overview',
-    title: 'User Profile & Customization',
-    text: 'Manage your display name, age, gender, and custom avatar image right here!',
-    expression: RooneyExpression.WINK,
-    route: '/profile',
-    position: 'bottom',
-  },
-
-  // Step 9 (UI Step 10): Navigate to My Habits (Route: /profile, expects click to /habits)
-  {
-    targetId: 'nav-item-habits',
-    title: 'Navigate to My Habits',
-    text: "Now let's check out My Habits! Click on 'My Habits' in the sidebar.",
-    expression: RooneyExpression.POINTING,
-    route: '/profile',
-    nextExpectedRoute: '/habits',
-    requiresNavClick: true,
-    position: 'right',
-  },
-
-  // Step 10 (UI Step 11): Create Habit Button (Route: /habits) -> 1.5s DELAY
-  {
-    targetId: 'create-habit-btn',
-    title: 'Habit Workspace & Creation',
-    text: "Here is your main habit workspace! Click 'Add New Habit' anytime to create custom habits.",
-    expression: RooneyExpression.CELEBRATORY,
-    route: '/habits',
-    position: 'bottom',
-  },
-
-  // Step 11 (UI Step 12): Final Farewell (Route: /habits)
-  {
-    targetId: 'nav-sidebar',
-    title: 'All Set & Ready to Go!',
-    text: "All set! You've mastered all the core features of TrackMyHabits. You're ready to build legendary consistency!",
-    expression: RooneyExpression.CELEBRATORY,
-    route: '/habits',
     position: 'right',
   },
 ];
 
-const CROSS_PAGE_LANDING_INDICES = [4, 6, 8, 10];
+const CROSS_PAGE_LANDING_INDICES: number[] = [];
 
 interface GuidedTutorialProps {
   active: boolean;

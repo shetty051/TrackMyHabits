@@ -297,10 +297,7 @@ export default function Rooney({
 
   const isIntroMode = introStep !== null;
 
-  const isTutorialActiveSession =
-    typeof window !== 'undefined' && sessionStorage.getItem('tmh_tutorial_active') === 'true';
-
-  if (hideFloating || (isTutorialActiveSession && !isProminent)) {
+  if (hideFloating) {
     return null;
   }
 

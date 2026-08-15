@@ -106,17 +106,18 @@ export default function DashboardShellContent({
   }, []);
 
   const navItems = [
-    { label: 'Overview', href: '/', icon: Home },
-    { label: 'My Habits', href: '/habits', icon: CheckSquare },
-    { label: 'Insights & Analytics', href: '/insights', icon: BarChart3 },
-    { label: 'Rewards & Badges', href: '/rewards', icon: Award },
-    { label: 'Profile & Settings', href: '/profile', icon: User },
+    { label: 'Overview', href: '/', icon: Home, id: 'nav-item-overview' },
+    { label: 'My Habits', href: '/habits', icon: CheckSquare, id: 'nav-item-habits' },
+    { label: 'Insights & Analytics', href: '/insights', icon: BarChart3, id: 'nav-item-insights' },
+    { label: 'Rewards & Badges', href: '/rewards', icon: Award, id: 'nav-item-rewards' },
+    { label: 'Profile & Settings', href: '/profile', icon: User, id: 'nav-item-profile' },
   ];
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--bg-primary)' }}>
       {/* Sidebar Navigation */}
       <aside
+        id="nav-sidebar"
         style={{
           width: isMobileViewport ? '100%' : collapsed ? '80px' : '260px',
           transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -297,7 +298,7 @@ export default function DashboardShellContent({
           </div>
 
           {/* Action Tools */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div id="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <ThemeToggle />
 
             {/* Notifications Drawer Toggle */}
@@ -348,11 +349,12 @@ export default function DashboardShellContent({
                       top: '50px',
                       right: 0,
                       width: '320px',
+                      maxWidth: 'calc(100vw - 32px)',
                       backgroundColor: 'var(--bg-secondary)',
                       border: '1px solid var(--border-subtle)',
                       borderRadius: '14px',
-                      boxShadow: 'var(--shadow-lg)',
-                      zIndex: 50,
+                      boxShadow: '0 12px 32px rgba(0,0,0,0.18)',
+                      zIndex: 100,
                       overflow: 'hidden',
                     }}
                   >

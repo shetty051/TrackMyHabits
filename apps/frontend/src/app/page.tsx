@@ -122,9 +122,31 @@ function HomeContent() {
     setRooneyMode((prev) => (prev === 'idle' ? 'prominent' : 'idle'));
   };
 
-  // Toggle Habit Completion Log for Today
+  // Toggle Habit Completion Log for Today (Optimistic UI Update)
   const handleToggleHabitLog = async (habitId: string) => {
     setTogglingId(habitId);
+
+    // Snapshot previous habits for rollback
+    const previousHabits = [...habits];
+
+    // Optimistically update state locally instantly
+    setHabits((prevHabits) =>
+      prevHabits.map((h) => {
+        if (h.id !== habitId) return h;
+        const logs = h.logs || [];
+        const existingLogIndex = logs.findIndex((l: any) => l.date === todayISO);
+        let newLogs;
+        if (existingLogIndex >= 0) {
+          newLogs = logs.map((l: any, idx: number) =>
+            idx === existingLogIndex ? { ...l, completed: !l.completed } : l
+          );
+        } else {
+          newLogs = [...logs, { id: 'temp-id', habitId, date: todayISO, completed: true }];
+        }
+        return { ...h, logs: newLogs };
+      })
+    );
+
     try {
       const res = await fetch(`/api/habits/${habitId}/log`, {
         method: 'POST',
@@ -137,7 +159,9 @@ function HomeContent() {
       }
 
       const data = await res.json();
-      await fetchHabits();
+
+      // Background sync fresh state
+      fetchHabits();
 
       // Trigger Rooney celebration if badge was newly unlocked
       if (data.newlyUnlocked && data.newlyUnlocked.length > 0) {
@@ -152,7 +176,6 @@ function HomeContent() {
           })
         );
       } else if (data.completed) {
-        // Trigger Standard Celebratory Rooney speech if checked
         window.dispatchEvent(
           new CustomEvent('rooney-speak', {
             detail: {
@@ -163,7 +186,10 @@ function HomeContent() {
         );
       }
     } catch (err: any) {
-      alert(err.message);
+      console.error('Log habit error:', err);
+      // Revert optimistic update on failure
+      setHabits(previousHabits);
+      alert(err.message || 'Failed to toggle habit log');
     } finally {
       setTogglingId(null);
     }
@@ -426,6 +452,7 @@ function HomeContent() {
 
           {/* Today's To-Do List Section */}
           <div
+            id="habits-checklist"
             className="glass-panel"
             style={{
               padding: '2rem',
